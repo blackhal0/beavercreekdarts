@@ -1,0 +1,161 @@
+:root {
+  --bg: #14201A;
+  --panel: #F2ECD9;
+  --ink: #2A2620;
+  --red: #B5232A;
+  --green-rail: #1E5631;
+  --brass: #B08D3D;
+  --muted: #7A7362;
+  --cream: #F2ECD9;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--cream);
+  font-family: 'Bitter', Georgia, 'Times New Roman', serif;
+  line-height: 1.5;
+}
+
+h1, h2 {
+  font-family: 'Bitter', Georgia, serif;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 0.6em 0;
+}
+
+h1 { font-size: 1.9rem; color: var(--cream); }
+h2 { font-size: 1.25rem; border-bottom: 2px solid var(--brass); padding-bottom: 0.35em; }
+
+a { color: var(--brass); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.muted { color: var(--muted); font-style: italic; }
+.footnote { font-size: 0.85rem; margin-top: 1em; }
+
+/* ---- Header ---- */
+.site-header {
+  background: #0E1712;
+  border-bottom: 3px solid var(--brass);
+}
+.header-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--cream);
+}
+.brand-logo { height: 64px; width: auto; display: block; }
+.brand-name {
+  font-family: 'Bitter', serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.01em;
+}
+.site-nav {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  display: flex;
+  gap: 1.4rem;
+}
+.site-nav a { color: #D8D2BE; }
+.site-nav a.active { color: var(--brass); border-bottom: 2px solid var(--brass); }
+
+/* ---- Page layout ---- */
+.page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+.panel {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid #D8CDA6;
+  border-top: 4px solid var(--green-rail);
+  padding: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+.panel h2 { margin-top: 0; }
+
+/* ---- Next Up (home hero) ---- */
+.next-up .eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  color: var(--red);
+  margin: 0 0 0.9em 0;
+}
+.matchup-row {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.9em;
+}
+.matchup { flex: 1 1 240px; font-size: 1.05rem; }
+.board-label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 0.2em;
+}
+.bye-line { font-size: 0.95rem; margin: 0; }
+
+/* ---- Tables (ledger style) ---- */
+.table-scroll {
+  overflow-x: auto;
+}
+table.ledger {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+}
+table.ledger th {
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--muted);
+  border-bottom: 2px solid var(--ink);
+  padding: 0.5em 0.6em;
+  white-space: nowrap;
+}
+table.ledger td {
+  padding: 0.55em 0.6em;
+  border-bottom: 1px solid #D8CDA6;
+  font-family: 'Bitter', serif;
+  white-space: nowrap;
+}
+table.ledger td.num, table.ledger td.rank {
+  font-family: 'JetBrains Mono', monospace;
+}
+table.ledger tbody tr:last-child td { border-bottom: none; }
+table.ledger td.winner { font-weight: 700; }
+table.ledger tr.first-place td { background: #E7D9AE; font-weight: 700; }
+table.ledger.compact td, table.ledger.compact th { padding: 0.4em 0.6em; }
+
+/* ---- Footer ---- */
+.site-footer {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 1.25rem 2.5rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 560px) {
+  .matchup-row { flex-direction: column; gap: 0.9rem; }
+  h1 { font-size: 1.5rem; }
+}
