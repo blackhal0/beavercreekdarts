@@ -144,6 +144,7 @@ table.ledger tbody tr:last-child td { border-bottom: none; }
 table.ledger td.winner { font-weight: 700; }
 table.ledger tr.first-place td { background: #E7D9AE; font-weight: 700; }
 table.ledger.compact td, table.ledger.compact th { padding: 0.4em 0.6em; }
+table.ledger tr.played td { text-decoration: line-through; opacity: 0.6; }
 
 /* ---- Footer ---- */
 .site-footer {

@@ -25,6 +25,7 @@ your host.
 """
 
 import argparse
+import datetime
 import shutil
 import sys
 from pathlib import Path
@@ -43,6 +44,12 @@ RESULTS_LAST_ROW = 36
 LEADERBOARD_HEADER_ROW = 15
 LEADERBOARD_FIRST_ROW = 16
 LEADERBOARD_LAST_ROW = 21
+
+TEAM_MAPPING_FIRST_ROW = 5
+TEAM_MAPPING_LAST_ROW = 10
+
+HAT_TRICKS_FIRST_ROW = 6
+HAT_TRICKS_LAST_ROW = 40
 
 
 def read_workbook(xlsx_path):
@@ -102,7 +109,32 @@ def read_workbook(xlsx_path):
             "games_won": stand_ws.cell(row=r, column=6).value,
         })
 
-    return schedule, results_by_night, leaderboard
+    # Map each player's first name -> their team name, so the Hat Tricks
+    # page can show "Dave (Marshall/Dave)" alongside the log entry.
+    tm_ws = wb["Team Mapping"]
+    player_team = {}
+    for r in range(TEAM_MAPPING_FIRST_ROW, TEAM_MAPPING_LAST_ROW + 1):
+        team_name = tm_ws.cell(row=r, column=2).value
+        if not team_name or "/" not in str(team_name):
+            continue
+        for name in str(team_name).split("/"):
+            player_team[name.strip()] = team_name
+
+    ht_ws = wb["Hat Tricks"]
+    hat_tricks = []
+    for r in range(HAT_TRICKS_FIRST_ROW, HAT_TRICKS_LAST_ROW + 1):
+        player = ht_ws.cell(row=r, column=3).value
+        if not player or str(player).strip() == "":
+            continue
+        night = ht_ws.cell(row=r, column=1).value
+        date = ht_ws.cell(row=r, column=2).value
+        player = str(player).strip()
+        hat_tricks.append({
+            "night": night, "date": date, "player": player,
+            "team": player_team.get(player, ""),
+        })
+
+    return schedule, results_by_night, leaderboard, hat_tricks
 
 
 def fmt_date_short(d):
@@ -136,7 +168,8 @@ def find_next_night(schedule, results_by_night):
 
 
 NAV_ITEMS = [("index.html", "Home"), ("schedule.html", "Schedule"),
-             ("results.html", "Results"), ("standings.html", "Standings")]
+             ("results.html", "Results"), ("standings.html", "Standings"),
+             ("hattricks.html", "Hat Tricks")]
 
 
 def render_header(active_page, league_name):
@@ -232,9 +265,13 @@ def build_index(schedule, results_by_night, leaderboard, league_name):
 
 
 def build_schedule(schedule, league_name):
+    today = datetime.date.today()
     rows = ""
     for row in schedule:
-        rows += f"""<tr>
+        d = row["date"]
+        night_date = d.date() if hasattr(d, "date") else d
+        played_cls = " class=\"played\"" if isinstance(night_date, datetime.date) and night_date < today else ""
+        rows += f"""<tr{played_cls}>
           <td class="num">{row['night']}</td>
           <td>{fmt_date_short(row['date'])}</td>
           <td>{row['board1']}</td>
@@ -324,6 +361,65 @@ def build_standings(leaderboard, league_name):
     return page_shell("Standings", "standings.html", league_name, body)
 
 
+def build_hat_tricks(hat_tricks, league_name):
+    if not hat_tricks:
+        body = """
+<h1>Hat Tricks</h1>
+<div class="panel">
+  <p class="muted">No hat tricks logged yet this season. Three bullseyes in a row --
+  get in the book!</p>
+</div>
+"""
+        return page_shell("Hat Tricks", "hattricks.html", league_name, body)
+
+    counts = {}
+    for ht in hat_tricks:
+        key = (ht["player"], ht["team"])
+        counts[key] = counts.get(key, 0) + 1
+    leaderboard = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0][0]))
+
+    board_rows = ""
+    for (player, team), count in leaderboard:
+        board_rows += f"""<tr>
+          <td>{player}</td>
+          <td class="muted">{team}</td>
+          <td class="num">{count}</td>
+        </tr>"""
+
+    log_rows = ""
+    for ht in sorted(hat_tricks, key=lambda h: (h["night"] is None, h["night"])):
+        log_rows += f"""<tr>
+          <td class="num">{ht['night'] if ht['night'] is not None else ''}</td>
+          <td>{fmt_date_short(ht['date'])}</td>
+          <td>{ht['player']}</td>
+          <td class="muted">{ht['team']}</td>
+        </tr>"""
+
+    body = f"""
+<h1>Hat Tricks</h1>
+<div class="panel">
+  <h2>Leaderboard</h2>
+  <div class="table-scroll">
+  <table class="ledger compact">
+    <thead><tr><th>Player</th><th>Team</th><th>Hat Tricks</th></tr></thead>
+    <tbody>{board_rows}</tbody>
+  </table>
+  </div>
+</div>
+<div class="panel">
+  <h2>Log</h2>
+  <div class="table-scroll">
+  <table class="ledger">
+    <thead><tr><th>Night</th><th>Date</th><th>Player</th><th>Team</th></tr></thead>
+    <tbody>{log_rows}</tbody>
+  </table>
+  </div>
+  <p class="muted footnote">A hat trick is three bullseyes in a row.</p>
+</div>
+"""
+    return page_shell("Hat Tricks", "hattricks.html", league_name, body)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate the dart league static site from the schedule workbook.")
     parser.add_argument("xlsx", help="Path to the league Excel workbook")
@@ -340,7 +436,7 @@ def main():
     assets_dir = out_dir / "assets"
     assets_dir.mkdir(parents=True, exist_ok=True)
 
-    schedule, results_by_night, leaderboard = read_workbook(xlsx_path)
+    schedule, results_by_night, leaderboard, hat_tricks = read_workbook(xlsx_path)
 
     script_dir = Path(__file__).parent
 
@@ -368,6 +464,7 @@ def main():
     (out_dir / "schedule.html").write_text(build_schedule(schedule, args.league_name))
     (out_dir / "results.html").write_text(build_results(schedule, results_by_night, args.league_name))
     (out_dir / "standings.html").write_text(build_standings(leaderboard, args.league_name))
+    (out_dir / "hattricks.html").write_text(build_hat_tricks(hat_tricks, args.league_name))
 
     print(f"Site written to {out_dir.resolve()}")
     print(f"Open {out_dir.resolve() / 'index.html'} in a browser to preview it.")
